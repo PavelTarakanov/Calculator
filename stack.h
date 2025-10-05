@@ -25,11 +25,11 @@ enum Stack_Error_Code
 };
 
 struct stack_t{int* data;
-               int size;
-               int capacity;};
+               int size, capacity;};
 
 struct processor_t{stack_t stk;
                  int* programm;
+                 int* regs;
                  int instruction_pointer;
 };
 
@@ -48,8 +48,8 @@ Stack_Error_Code StackVerify(stack_t* stk);
 void StackDump(stack_t* stk);
 
 bool read_programm(FILE* input_address, int** programm, int* number_of_commands);
-void calculator(stack_t* stk, int* programm);
-bool do_user_command(int command, stack_t* stk, int* command_number, int* programm);
+void calculator(processor_t* processor);
+bool do_user_command(int command, processor_t* processor);
 
 int my_strcmp(const char* str_1, const char* str_2);
 

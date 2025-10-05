@@ -72,6 +72,7 @@ void make_mashine_code(FILE* output_address, char* buffer)
     char command[10] = {};
     int number_of_command = 1;
     int number_of_numbers = 0;
+    bool error = 0;
     sscanf(buffer,"%s", command);
 
     while(strcmp(command, "HLT") != 0)
@@ -117,9 +118,38 @@ void make_mashine_code(FILE* output_address, char* buffer)
         {
             mashine_code[number_of_command] = 6;
         }
+        else if (strcmp(command, "POPR") == 0)
+        {
+            int value = 0;
+
+            buffer += (strlen(command)+1)*sizeof(char);
+            mashine_code[number_of_command] = 42;
+            number_of_command++;
+            number_of_numbers++;
+
+            sscanf(buffer, "%s", command);
+
+            value = command[1] - 'A';
+            mashine_code[number_of_command] = value;
+        }
+        else if (strcmp(command, "PUSHR") == 0)
+        {
+            int value = 0;
+
+            buffer += (strlen(command)+1)*sizeof(char);
+            mashine_code[number_of_command] = 33;
+            number_of_command++;
+            number_of_numbers++;
+
+            sscanf(buffer, "%s", command);
+
+            value = command[1] - 'A';
+            mashine_code[number_of_command] = value;
+        }
         else
         {
-            printf("asm.asm:%d: syntax_error\n", number_of_command);
+            printf("asm.asm:%d: syntax_error\n", number_of_command - number_of_numbers);
+            error = 1;
         }
 
         number_of_command++;
@@ -127,12 +157,13 @@ void make_mashine_code(FILE* output_address, char* buffer)
         sscanf(buffer,"%s", command);
     }
 
-    mashine_code[number_of_command] = 0;
+    mashine_code[number_of_command] = -1;
     number_of_command++;
     mashine_code[0] = number_of_command - number_of_numbers - 1;
 
-    for (int i = 0; i < number_of_command; i++)
-        fprintf(output_address, "%d ", mashine_code[i]);
+    if (!error)
+        for (int i = 0; i < number_of_command; i++)
+            fprintf(output_address, "%d ", mashine_code[i]);
 
     return;
 }
