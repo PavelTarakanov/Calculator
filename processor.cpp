@@ -10,8 +10,8 @@
 int main(int argc, char* argv[])
 {
     stack_t stk = {};
+    processor_t processor = {.stk = stk, .instruction_pointer = 0};
     FILE* input_address = NULL;
-    int* programm = NULL;
     int number_of_commands = 0;
 
     if (check_file_founded(argc, argv[0]))
@@ -20,7 +20,10 @@ int main(int argc, char* argv[])
     if (check_file_opening(argv[1], &input_address))
         return FILE_OPENING_ERROR;
 
-    read_programm(input_address, &programm, &number_of_commands);
+    read_programm(input_address, &processor.programm , &number_of_commands);
+
+    if (check_file_closing(input_address))
+        return FILE_CLOSING_ERROR;
 
     /*
     for (int i = 0; i < number_of_commands*2; i++)
@@ -29,15 +32,12 @@ int main(int argc, char* argv[])
         printf("%d\n", programm[i]);
     }
     */
-    if (StackInit(&stk, START_STACK_SIZE))
+    if (StackInit(&processor.stk, START_STACK_SIZE))
         return 0;
 
-    calculator(&stk, programm);
+    calculator(&processor.stk, processor.programm);
 
     //StackDump(&stk);
-
-    if (check_file_closing(input_address))
-        return FILE_CLOSING_ERROR;
 
     return 0;
 }
