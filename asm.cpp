@@ -15,11 +15,11 @@ int main(int argc, char* argv[])
     char* buffer = NULL;
 
     if (check_file_founded(argc, argv[0]))
-        return 0;
+        return FILE_NOT_FOUND_ERROR;
     if (check_file_opening(argv[1], &input_address))
-        return 0;
+        return FILE_OPENING_ERROR;
     if (check_file_opening(argv[2], &output_address))
-        return 0;
+        return FILE_OPENING_ERROR;
 
     if (read_text(input_address, &buffer))
     {
@@ -27,12 +27,12 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    do_mashine_code(output_address, buffer);
+    make_mashine_code(output_address, buffer);
 
     if (check_file_closing(input_address))
-        return 0;
+        return FILE_CLOSING_ERROR;
     if (check_file_closing(output_address))
-        return 0;
+        return FILE_CLOSING_ERROR;
 
     return 0;
 }
@@ -62,61 +62,77 @@ int read_text(FILE* input_address, char** buffer)
     return 0;
 }
 
-void do_mashine_code(FILE* output_address, char* buffer)
+void make_mashine_code(FILE* output_address, char* buffer)
 {
     assert(output_address);
     assert(buffer);
 
+    int start_number_of_command = 10;
+    int* mashine_code = (int*) calloc(start_number_of_command, sizeof(int));
     char command[10] = {};
-    int number_of_str = 1;
+    int number_of_command = 1;
+    int number_of_numbers = 0;
     sscanf(buffer,"%s", command);
 
     while(strcmp(command, "HLT") != 0)
     {
         //printf("cmd = '%s'\n", command);
+        if (number_of_command >= start_number_of_command)
+        {
+            start_number_of_command *= 2;
+            mashine_code = (int*) realloc(mashine_code, start_number_of_command*sizeof(int));
+        }
 
         if (strcmp(command, "PUSH") == 0)
         {
+            int value = 0;
+
             buffer += (strlen(command)+1)*sizeof(char);
             //printf("Write 1\n");
-            fprintf(output_address, "1");
+            mashine_code[number_of_command] = 1;
+            number_of_command++;
+            number_of_numbers++;
 
+            sscanf(buffer, "%d", &value);
             sscanf(buffer, "%s", command);
-
-            fprintf(output_address, " %s", command);
+            mashine_code[number_of_command] = value;
         }
         else if (strcmp(command, "OUT") == 0)
         {
-            fprintf(output_address, "2");
+            mashine_code[number_of_command] = 2;
         }
         else if (strcmp(command, "ADD") == 0)
         {
-            fprintf(output_address, "3");
+            mashine_code[number_of_command] = 3;
         }
         else if (strcmp(command, "MUL") == 0)
         {
-            fprintf(output_address, "4");
+            mashine_code[number_of_command] = 4;
         }
         else if (strcmp(command, "SUB") == 0)
         {
-            fprintf(output_address, "5");
+            mashine_code[number_of_command] = 5;
         }
         else if (strcmp(command, "DIV") == 0)
         {
-            fprintf(output_address, "6");
+            mashine_code[number_of_command] = 6;
         }
         else
         {
-            printf("asm.asm:%d: syntax_error\n", number_of_str);//TODO спросить нужно ли сохранаять в отдельный буффер а только потом вводить в отдельный файл
+            printf("asm.asm:%d: syntax_error\n", number_of_command);
         }
 
-        number_of_str++;
+        number_of_command++;
         buffer += (strlen(command)+1)*sizeof(char);
         sscanf(buffer,"%s", command);
-        fprintf(output_address, " \n");
     }
 
-    fprintf(output_address, "0");
+    mashine_code[number_of_command] = 0;
+    number_of_command++;
+    mashine_code[0] = number_of_command - number_of_numbers - 1;
+
+    for (int i = 0; i < number_of_command; i++)
+        fprintf(output_address, "%d ", mashine_code[i]);
 
     return;
 }

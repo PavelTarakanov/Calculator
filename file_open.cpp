@@ -3,7 +3,7 @@
 #include <assert.h>
 #include "stack.h"
 
-int check_file_founded(int argc, const char *input_address)
+bool check_file_founded(int argc, const char *input_address)
 {
     if (argc < NUMBER_OF_FILES)
     {
@@ -14,7 +14,7 @@ int check_file_founded(int argc, const char *input_address)
     return 0;
 }
 
-int check_file_opening(const char *input_address, FILE** file_ptr)
+bool check_file_opening(const char *input_address, FILE** file_ptr)
 {
     if ((*file_ptr = fopen(input_address, "a+")) == NULL)
     {
@@ -25,7 +25,7 @@ int check_file_opening(const char *input_address, FILE** file_ptr)
     return 0;
 }
 
-int check_file_closing(FILE* input_address)
+bool check_file_closing(FILE* input_address)
 {
     assert(input_address);
 
