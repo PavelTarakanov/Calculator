@@ -20,7 +20,8 @@ int main(int argc, char* argv[])
     if (check_file_opening(argv[1], &input_address))
         return FILE_OPENING_ERROR;
 
-    read_programm(input_address, &processor.programm , &number_of_commands);
+    if (read_programm(input_address, &processor.programm , &number_of_commands))
+        return ALLOCATION_ERROR;
 
     if (check_file_closing(input_address))
         return FILE_CLOSING_ERROR;
@@ -31,17 +32,33 @@ int main(int argc, char* argv[])
         printf("%d\n", processor.programm[i]);
     }
     */
-    if (StackInit(&processor.stk, START_STACK_SIZE))
-        return 0;
+    if (processor_init(&processor, START_STACK_SIZE))
+        return INITIALISATION_ERROR;
 
     calculator(&processor);
 
     //StackDump(&stk);
 
-    return 0;
+    return NO_FILE_ERROR;
 }
 
-bool read_programm(FILE* input_address, int** programm, int* number_of_commands)//TODO bool?
+Stack_Error_Code processor_init(processor_t* processor, const unsigned int capacity)
+{
+    assert(processor);
+
+    if (stack_init(&processor->stk, capacity))
+        return ALLOCATION_ERROR;
+
+    processor->regs = (int*) calloc(16, sizeof(int));
+    if (processor->regs == NULL)
+        return ALLOCATION_ERROR;
+
+    processor->instruction_pointer = 0;
+
+    return NO_ERROR;
+}
+
+bool read_programm(FILE* input_address, int** programm, int* number_of_commands)
 {
     assert(input_address);
     assert(programm);
@@ -53,6 +70,11 @@ bool read_programm(FILE* input_address, int** programm, int* number_of_commands)
     fscanf(input_address, "%d", number_of_commands);
     *programm = (int*) calloc(*number_of_commands*2, sizeof(int));
 
+    if (*programm == NULL)
+    {
+        return 1;
+    }
+
     while (command != -1)
     {
         fscanf(input_address, "%d", &command);
@@ -62,10 +84,10 @@ bool read_programm(FILE* input_address, int** programm, int* number_of_commands)
 
     *number_of_commands = i;
 
-    return 1;
+    return 0;
 }
 
-void calculator(processor_t* processor)//TODO
+void calculator(processor_t* processor)
 {
     assert(processor);
 
@@ -77,14 +99,16 @@ void calculator(processor_t* processor)//TODO
         if (do_user_command(command, processor))
             break;
 
-        //StackDump(stk);
+        /*
+        stack_dump(&processor->stk);
+        printf("%d", processor->programm[processor->instruction_pointer]);
+        getchar();*/
 
-        if (StackVerify(&processor->stk))
+        if (stack_verify(&processor->stk))
         {
-            printf("ERROR!\nStack_Error_Code - %d\n", StackVerify(&processor->stk));
+            printf("ERROR!\nStack_Error_Code - %d\n", stack_verify(&processor->stk));
             break;
         }
-
         processor->instruction_pointer++;
         command = processor->programm[processor->instruction_pointer];
     }
@@ -109,46 +133,46 @@ bool do_user_command(int command, processor_t* processor)
             (processor->instruction_pointer)++;
             value = processor->programm[processor->instruction_pointer];
 
-            StackPush(&processor->stk, value);
+            stack_push(&processor->stk, value);
 
             return 0;
         case 2:
-            StackPop(&processor->stk, &value);
+            stack_pop(&processor->stk, &value);
 
             printf("%d\n", value);
 
             return 0;
         case 3:
-            StackPop(&processor->stk, &elem_1);
-            StackPop(&processor->stk, &elem_2);
-            StackPush(&processor->stk, elem_1+elem_2);
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+            stack_push(&processor->stk, elem_1+elem_2);
 
             return 0;
         case 4:
-            StackPop(&processor->stk, &elem_1);
-            StackPop(&processor->stk, &elem_2);
-            StackPush(&processor->stk, elem_1*elem_2);
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+            stack_push(&processor->stk, elem_1*elem_2);
 
             return 0;
         case 5:
-            StackPop(&processor->stk, &elem_1);
-            StackPop(&processor->stk, &elem_2);
-            StackPush(&processor->stk, elem_2-elem_1);
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+            stack_push(&processor->stk, elem_2-elem_1);
 
             return 0;
         case 6:
-            StackPop(&processor->stk, &elem_1);
-            StackPop(&processor->stk, &elem_2);
-            StackPush(&processor->stk, elem_2/elem_1);
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+            stack_push(&processor->stk, elem_2/elem_1);
 
             return 0;
         case 7:
-            StackPop(&processor->stk, &elem_1);
-            StackPush(&processor->stk, (int) sqrt(elem_1));
+            stack_pop(&processor->stk, &elem_1);
+            stack_push(&processor->stk, (int) sqrt(elem_1));
 
             return 0;
         case 42:
-            StackPop(&processor->stk, &value);
+            stack_pop(&processor->stk, &value);
 
             (processor->instruction_pointer)++;
             reg_number = processor->programm[processor->instruction_pointer];
@@ -159,12 +183,21 @@ bool do_user_command(int command, processor_t* processor)
             (processor->instruction_pointer)++;
             reg_number = processor->programm[processor->instruction_pointer];
 
-            StackPush(&processor->stk, (processor->regs)[reg_number]);
+            stack_push(&processor->stk, (processor->regs)[reg_number]);
 
             return 0;
+        case 50:
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+
+            (processor->instruction_pointer)++;
+            if (elem_1>elem_2)
+                processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
+            return 0;
+
         default:
             printf("Print real command!\n");
-            return 0;
+            return 1;
     }
 }
 

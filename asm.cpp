@@ -68,13 +68,15 @@ void make_mashine_code(FILE* output_address, char* buffer)
     assert(buffer);
 
     int start_number_of_command = 10;
+    int start_number_of_labels = 10;
     int* mashine_code = (int*) calloc(start_number_of_command, sizeof(int));
-    char command[10] = {};
+    int* labels = (int*) calloc(start_number_of_labels, sizeof(int));
+    char command[COMMAND_SIZE] = {};
     int number_of_command = 1;
-    int number_of_numbers = 0;
+    int number_of_label = -1;
     bool error = 0;
     sscanf(buffer,"%s", command);
-
+    
     while(strcmp(command, "HLT") != 0)
     {
         //printf("cmd = '%s'\n", command);
@@ -84,7 +86,16 @@ void make_mashine_code(FILE* output_address, char* buffer)
             mashine_code = (int*) realloc(mashine_code, start_number_of_command*sizeof(int));
         }
 
-        if (strcmp(command, "PUSH") == 0)
+        if (command[0] == ';')
+            number_of_command--;
+        else if (command[0] == ':')
+        {
+            number_of_command--;
+            sscanf(command+1, "%d", &number_of_label);
+            labels[number_of_label] = number_of_command;
+
+        }
+        else if (strcmp(command, "PUSH") == 0)
         {
             int value = 0;
 
@@ -92,7 +103,6 @@ void make_mashine_code(FILE* output_address, char* buffer)
             //printf("Write 1\n");
             mashine_code[number_of_command] = 1;
             number_of_command++;
-            number_of_numbers++;
 
             sscanf(buffer, "%d", &value);
             sscanf(buffer, "%s", command);
@@ -118,6 +128,10 @@ void make_mashine_code(FILE* output_address, char* buffer)
         {
             mashine_code[number_of_command] = 6;
         }
+        else if (strcmp(command, "IN") == 0)
+        {
+            mashine_code[number_of_command] = 7;
+        }
         else if (strcmp(command, "POPR") == 0)
         {
             int value = 0;
@@ -125,7 +139,6 @@ void make_mashine_code(FILE* output_address, char* buffer)
             buffer += (strlen(command)+1)*sizeof(char);
             mashine_code[number_of_command] = 42;
             number_of_command++;
-            number_of_numbers++;
 
             sscanf(buffer, "%s", command);
 
@@ -139,16 +152,37 @@ void make_mashine_code(FILE* output_address, char* buffer)
             buffer += (strlen(command)+1)*sizeof(char);
             mashine_code[number_of_command] = 33;
             number_of_command++;
-            number_of_numbers++;
 
             sscanf(buffer, "%s", command);
 
             value = command[1] - 'A';
+
             mashine_code[number_of_command] = value;
+        }
+        else if (strcmp(command, "JB") == 0)
+        {
+            int value = 0;
+
+            buffer += (strlen(command)+1)*sizeof(char);
+            //printf("Write 1\n");
+            mashine_code[number_of_command] = 50;
+            number_of_command++;
+
+            sscanf(buffer, "%d", &value);
+            sscanf(buffer, "%s", command);
+            if (command[0] == ':')
+            {
+                sscanf(command+1, "%d", &number_of_label);
+                mashine_code[number_of_command] = labels[number_of_label];
+            }
+            else
+            {
+                mashine_code[number_of_command] = value;
+            }
         }
         else
         {
-            printf("asm.asm:%d: syntax_error\n", number_of_command - number_of_numbers);
+            printf("asm.asm:%d: syntax_error\n", number_of_command);
             error = 1;
         }
 
@@ -158,8 +192,8 @@ void make_mashine_code(FILE* output_address, char* buffer)
     }
 
     mashine_code[number_of_command] = -1;
+    mashine_code[0] = number_of_command;
     number_of_command++;
-    mashine_code[0] = number_of_command - number_of_numbers - 1;
 
     if (!error)
         for (int i = 0; i < number_of_command; i++)
