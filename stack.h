@@ -67,6 +67,9 @@ bool read_programm(FILE* input_address, int** programm, int* number_of_commands)
 void calculator(processor_t* processor);
 bool do_user_command(int command, processor_t* processor);
 
+void cleaner(processor_t* processor);
+
+
 int my_strcmp(const char* str_1, const char* str_2);
 
 #endif //STACK_H

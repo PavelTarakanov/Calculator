@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
     calculator(&processor);
 
     //StackDump(&stk);
+    cleaner(&processor);
 
     return NO_FILE_ERROR;
 }
@@ -269,4 +270,11 @@ int my_strcmp(const char* str_1, const char* str_2)
     }
 
     return 0;
+}
+
+void cleaner(processor_t* processor)
+{
+    free(processor->stk.data);
+    free(processor->ret_stk.data);
+
 }
