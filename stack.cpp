@@ -8,7 +8,7 @@
 #include "stack.h"
 
 
-bool StackInit(stack_t* stk, int capacity)
+Stack_Error_Code stack_init(stack_t* stk, unsigned int capacity)
 {
     assert(stk);
 
@@ -18,67 +18,72 @@ bool StackInit(stack_t* stk, int capacity)
     if (stk->data == NULL)
     {
         printf("Error while memory allocation\n");
-        return 1;
+        return ALLOCATION_ERROR;
     }
     stk->data[0] = LEFT_BIRD;
     stk->data[capacity+1] = RIGTH_BIRD;
     //StackDump(stk);
 
-    return 0;
+    return NO_ERROR;
 }
 
-Stack_Error_Code StackPush(stack_t* stk, int value)
+Stack_Error_Code stack_push(stack_t* stk, int value)
 {
     assert(stk);
 
-    Stack_Error_Code err = StackVerify(stk);
+    Stack_Error_Code err = stack_verify(stk);
 
     if (err)
     {
-        StackDump(stk);
+        stack_dump(stk);
     }
 
     if (stk->size == stk->capacity)
-        stack_upgrade(stk);
+        if (stack_upgrade(stk))
+            return REALLOCATION_ERROR;
 
     stk->data[stk->size++] = value;
 
-    err = StackVerify(stk);
+    err = stack_verify(stk);
 
     if (err)
     {
-        StackDump(stk);
+        stack_dump(stk);
     }
 
     return err;
 }
 
-Stack_Error_Code StackPop(stack_t* stk, int* address)
+Stack_Error_Code stack_pop(stack_t* stk, int* address)
 {
     assert(stk);
     assert(address);
 
-    Stack_Error_Code err = StackVerify(stk);
+    Stack_Error_Code err = stack_verify(stk);
 
     if (err)
     {
-        StackDump(stk);
+        stack_dump(stk);
     }
 
     *address = stk->data[--stk->size];
     stk->data[stk->size] = 0;
 
-    err = StackVerify(stk);
+    if (stk->size <= stk->capacity/2)
+        if (stack_degrade(stk))
+            return REALLOCATION_ERROR;
+
+    err = stack_verify(stk);
 
     if (err)
     {
-        StackDump(stk);
+        stack_dump(stk);
     }
 
     return err;
 }
 
-Stack_Error_Code StackVerify(stack_t* stk)
+Stack_Error_Code stack_verify(stack_t* stk)
 {
     assert(stk);
 
@@ -87,6 +92,9 @@ Stack_Error_Code StackVerify(stack_t* stk)
 
     if (stk->size <= 0)
         return STK_SIZE_LESS_ZERO_ERROR;
+
+    if (stk->size > stk->capacity)
+        return STK_SIZE_MORE_CAPACITY_ERROR;
 
     if (stk->data[0] != LEFT_BIRD)
         return LEFT_BIRD_ERROR;
@@ -97,7 +105,7 @@ Stack_Error_Code StackVerify(stack_t* stk)
     return NO_ERROR;
 }
 
-void StackDump(stack_t* stk)
+void stack_dump(stack_t* stk)
 {
     assert(stk);
 
@@ -108,7 +116,7 @@ void StackDump(stack_t* stk)
             "   data[%p]\n"
             "   {\n"
             , stk, stk->size, stk->capacity, stk->data);
-    for (int i = 0; i < stk->capacity+2; i++)
+    for (unsigned int i = 0; i < stk->capacity+2; i++)
     {
         if (stk->data[i] != 0)
             printf("        *[%d] = %d\n", i, stk->data[i]);
@@ -122,12 +130,36 @@ void StackDump(stack_t* stk)
     return;
 }
 
-void stack_upgrade(stack_t* stk)
+Stack_Error_Code stack_upgrade(stack_t* stk)
 {
+    assert(stk);
 
     stk->data[stk->capacity+1] = 0;
     stk->capacity = stk->capacity*2;
     stk->data = (int*) realloc(stk->data, (stk->capacity + 2)*sizeof(int));
     stk->data[stk->capacity+1] = RIGTH_BIRD;
+
+    if (stk->data == NULL)
+    {
+        return REALLOCATION_ERROR;
+    }
+
+    return stack_verify(stk);
 }
 
+Stack_Error_Code stack_degrade(stack_t* stk)
+{
+    assert(stk);
+
+    stk->data[stk->capacity+1] = 0;
+    stk->capacity = stk->capacity/2;
+    stk->data = (int*) realloc(stk->data, (stk->capacity + 2)*sizeof(int));
+    stk->data[stk->capacity+1] = RIGTH_BIRD;
+
+    if (stk->data == NULL)
+    {
+        return REALLOCATION_ERROR;
+    }
+
+    return stack_verify(stk);
+}

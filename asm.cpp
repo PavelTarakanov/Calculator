@@ -168,6 +168,10 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
         {
             (*mashine_code)[number_of_command] = 9;
         }
+        else if (strcmp(command, "SQRT") == 0)
+        {
+            (*mashine_code)[number_of_command] = 10;
+        }
         else if (strcmp(command, "POPR") == 0)
         {
             int value = 0;

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include <ctype.h>//TODO прыгает куда-то не туда
 #include <assert.h>
 #include <unistd.h>
 #include <math.h>
@@ -9,8 +9,7 @@
 
 int main(int argc, char* argv[])
 {
-    stack_t stk = {};
-    processor_t processor = {.stk = stk, .regs = (int*) calloc(16, sizeof(int)), .instruction_pointer = 0};
+    processor_t processor = {};
     FILE* input_address = NULL;
     int number_of_commands = 0;
 
@@ -35,6 +34,8 @@ int main(int argc, char* argv[])
     if (processor_init(&processor, START_STACK_SIZE))
         return INITIALISATION_ERROR;
 
+    //processor_dump(&processor, number_of_commands);
+
     calculator(&processor);
 
     //StackDump(&stk);
@@ -49,13 +50,35 @@ Stack_Error_Code processor_init(processor_t* processor, const unsigned int capac
     if (stack_init(&processor->stk, capacity))
         return ALLOCATION_ERROR;
 
-    processor->regs = (int*) calloc(16, sizeof(int));
+    if (stack_init(&processor->ret_stk, capacity))
+        return ALLOCATION_ERROR;
+
+    processor->regs = (int*) calloc(NUMBER_OF_REGS, sizeof(int));
     if (processor->regs == NULL)
         return ALLOCATION_ERROR;
 
     processor->instruction_pointer = 0;
 
     return NO_ERROR;
+}
+
+void processor_dump(processor_t* processor, int number_of_commands)
+{
+    printf("processor[%p]\n"
+           "programm:\n", processor);
+    for (int i = 0; i < number_of_commands; i++)
+    {
+        printf("    [%d] = %d", i, processor->programm[i]);
+        if (i == processor->instruction_pointer)
+            printf("<--");
+        printf("\n");
+    }
+    printf("regs:\n");
+    for (int i = 0; i < 16; i++)
+    {
+        printf("    regs[%d] = %d\n", i, processor->regs[i]);
+    }
+    stack_dump(&processor->stk);
 }
 
 bool read_programm(FILE* input_address, int** programm, int* number_of_commands)
@@ -65,24 +88,21 @@ bool read_programm(FILE* input_address, int** programm, int* number_of_commands)
     assert(number_of_commands);
 
     int command = -2;
-    int i = 0;
 
     fscanf(input_address, "%d", number_of_commands);
-    *programm = (int*) calloc(*number_of_commands*2, sizeof(int));
+    *programm = (int*) calloc(*number_of_commands, sizeof(int));
 
     if (*programm == NULL)
     {
         return 1;
     }
 
-    while (command != -1)
+    for (int i = 0; i < *number_of_commands; i++)
     {
         fscanf(input_address, "%d", &command);
+        //printf("%d\n", command);
         (*programm)[i] = command;
-        i++;
     }
-
-    *number_of_commands = i;
 
     return 0;
 }
@@ -96,8 +116,13 @@ void calculator(processor_t* processor)
     //printf("%s %d", command, value);
     while (command)
     {
+        //printf("%d\n", command);
         if (do_user_command(command, processor))
             break;
+
+        //processor_dump(processor, number_of_commands);
+        //getchar();
+
 
         /*
         stack_dump(&processor->stk);
@@ -111,6 +136,7 @@ void calculator(processor_t* processor)
         }
         processor->instruction_pointer++;
         command = processor->programm[processor->instruction_pointer];
+        //printf("%d\n", command);
     }
 
     return;
@@ -124,6 +150,7 @@ bool do_user_command(int command, processor_t* processor)
     int reg_number = -1;
     int elem_1 = 0;
     int elem_2 = 0;
+
 
     switch(command)
     {
@@ -167,6 +194,22 @@ bool do_user_command(int command, processor_t* processor)
 
             return 0;
         case 7:
+            scanf("%d", &value);
+            stack_push(&processor->stk, value);
+
+            return 0;
+        case 8:
+            (processor->instruction_pointer)++;
+            stack_push(&processor->ret_stk, processor->instruction_pointer);
+            //processor->regs[15] = processor->instruction_pointer;
+            processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
+
+            return 0;
+        case 9:
+            stack_pop(&processor->ret_stk, &processor->instruction_pointer);
+
+            return 0;
+        case 10:
             stack_pop(&processor->stk, &elem_1);
             stack_push(&processor->stk, (int) sqrt(elem_1));
 
@@ -177,6 +220,7 @@ bool do_user_command(int command, processor_t* processor)
             (processor->instruction_pointer)++;
             reg_number = processor->programm[processor->instruction_pointer];
             (processor->regs)[reg_number] = value;
+            //printf("POPR %d", value);
 
             return 0;
         case 33:

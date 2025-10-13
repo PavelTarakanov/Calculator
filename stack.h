@@ -4,6 +4,7 @@
 const int NUMBER_OF_FILES = 2;
 
 const int COMMAND_SIZE = 200;
+const int NUMBER_OF_REGS = 16;
 const unsigned int START_STACK_SIZE = 10;
 const int LEFT_BIRD = 2147483647;
 const int RIGTH_BIRD = 2147483646;
@@ -23,10 +24,11 @@ enum Stack_Error_Code
     NO_ERROR = 0,
     STK_ADDRESS_ERROR = 1,
     STK_SIZE_LESS_ZERO_ERROR = 2,
-    LEFT_BIRD_ERROR = 3,
-    RIGTH_BIRD_ERROR = 4,
-    ALLOCATION_ERROR = 5,
-    REALLOCATION_ERROR = 6
+    STK_SIZE_MORE_CAPACITY_ERROR = 3,
+    LEFT_BIRD_ERROR = 4,
+    RIGTH_BIRD_ERROR = 5,
+    ALLOCATION_ERROR = 6,
+    REALLOCATION_ERROR = 7
 };
 
 struct stack_t{int* data;
@@ -34,23 +36,28 @@ struct stack_t{int* data;
                unsigned int capacity;};
 
 struct processor_t{stack_t stk;
-                 int* programm;
-                 int* regs;
-                 int instruction_pointer;
+                   stack_t ret_stk;
+                   int* programm;
+                   int* regs;
+                   int instruction_pointer;
 };
 
 bool check_file_founded(int argc, const char *input_address);
 bool check_file_opening(const char *input_address, FILE** file_ptr);
 bool check_file_closing(FILE* input_address);
 
-int read_text(FILE* input_address, char** buffer);
-void make_mashine_code(FILE* output_address, char* buffer);
-int make_code_massive(char* buffer, int number_of_command, int* labels, int** mashine_code, bool* error);
+long long int read_text(FILE* input_address, char** buffer);
+void massive_upgrade(int** mashine_code, int* start_number_of_command, int number_of_command);
+void make_mashine_code(FILE* output_address, char* buffer, long long int number_of_symbols);
+bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* start_number_of_command,
+                               int* start_number_of_labels, long long int number_of_symbols);
 
 Stack_Error_Code stack_init(stack_t* stk, unsigned int capacity);
 Stack_Error_Code processor_init(processor_t* processor, const unsigned int capacity);
+void processor_dump(processor_t* processor, int number_of_commands);
 
 Stack_Error_Code stack_upgrade(stack_t* stk);
+Stack_Error_Code stack_degrade(stack_t* stk);
 Stack_Error_Code stack_push(stack_t* stk, int value);
 Stack_Error_Code stack_pop(stack_t* stk, int* address);
 Stack_Error_Code stack_verify(stack_t* stk);
