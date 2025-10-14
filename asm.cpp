@@ -23,6 +23,7 @@ int main(int argc, char* argv[])
         return FILE_OPENING_ERROR;
 
     number_of_symbols = read_text(input_address, &buffer);
+
     if (!number_of_symbols)
     {
         printf("Error while reading from file\n");
@@ -122,7 +123,11 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
         }
         else if (strcmp(command, "HLT") == 0)
         {
-            (*mashine_code)[number_of_command] = -1;
+            (*mashine_code)[number_of_command] = HLT;
+        }
+        else if (strcmp(command, "POP") == 0)
+        {
+            (*mashine_code)[number_of_command] = POP;
         }
         else if (strcmp(command, "PUSH") == 0)
         {
@@ -130,7 +135,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
 
             buffer += (strlen(command)+1)*sizeof(char);
             //printf("Write 1\n");
-            (*mashine_code)[number_of_command] = 1;
+            (*mashine_code)[number_of_command] = PUSH;
             massive_upgrade(mashine_code, start_number_of_command, number_of_command);
             number_of_command++;
             massive_upgrade(mashine_code, start_number_of_command, number_of_command);
@@ -142,42 +147,42 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
         }
         else if (strcmp(command, "OUT") == 0)
         {
-            (*mashine_code)[number_of_command] = 2;
+            (*mashine_code)[number_of_command] = OUT;
         }
         else if (strcmp(command, "ADD") == 0)
         {
-            (*mashine_code)[number_of_command] = 3;
+            (*mashine_code)[number_of_command] = ADD;
         }
         else if (strcmp(command, "MUL") == 0)
         {
-            (*mashine_code)[number_of_command] = 4;
+            (*mashine_code)[number_of_command] = MUL;
         }
         else if (strcmp(command, "SUB") == 0)
         {
-            (*mashine_code)[number_of_command] = 5;
+            (*mashine_code)[number_of_command] = SUB;
         }
         else if (strcmp(command, "DIV") == 0)
         {
-            (*mashine_code)[number_of_command] = 6;
+            (*mashine_code)[number_of_command] = DIV;
         }
         else if (strcmp(command, "IN") == 0)
         {
-            (*mashine_code)[number_of_command] = 7;
+            (*mashine_code)[number_of_command] = IN;
         }
         else if (strcmp(command, "RET") == 0)
         {
-            (*mashine_code)[number_of_command] = 9;
+            (*mashine_code)[number_of_command] = RET;
         }
         else if (strcmp(command, "SQRT") == 0)
         {
-            (*mashine_code)[number_of_command] = 10;
+            (*mashine_code)[number_of_command] = SQRT;
         }
         else if (strcmp(command, "POPR") == 0)
         {
             int value = 0;
 
             buffer += (strlen(command)+1)*sizeof(char);
-            (*mashine_code)[number_of_command] = 42;
+            (*mashine_code)[number_of_command] = POPR;
             massive_upgrade(mashine_code, start_number_of_command, number_of_command);
             number_of_command++;
             massive_upgrade(mashine_code, start_number_of_command, number_of_command);
@@ -192,7 +197,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
             int value = 0;
 
             buffer += (strlen(command)+1)*sizeof(char);
-            (*mashine_code)[number_of_command] = 33;
+            (*mashine_code)[number_of_command] = PUSHR;
             massive_upgrade(mashine_code, start_number_of_command, number_of_command);
             number_of_command++;
             massive_upgrade(mashine_code, start_number_of_command, number_of_command);
@@ -209,7 +214,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
 
             buffer += (strlen(command)+1)*sizeof(char);
             //printf("Write 1\n");
-            (*mashine_code)[number_of_command] = 50;
+            (*mashine_code)[number_of_command] = JB;
             massive_upgrade(mashine_code, start_number_of_command, number_of_command);
             number_of_command++;
             massive_upgrade(mashine_code, start_number_of_command, number_of_command);
@@ -232,7 +237,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
 
             buffer += (strlen(command)+1)*sizeof(char);
             //printf("Write 1\n");
-            (*mashine_code)[number_of_command] = 8;
+            (*mashine_code)[number_of_command] = CALL;
             massive_upgrade(mashine_code, start_number_of_command, number_of_command);
             number_of_command++;
             massive_upgrade(mashine_code, start_number_of_command, number_of_command);
@@ -269,6 +274,9 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
 
 void massive_upgrade(int** mashine_code, int* start_number_of_command, int number_of_command)
 {
+    assert(mashine_code);
+    assert(start_number_of_command);
+
     if (number_of_command >= *start_number_of_command)
     {
         *start_number_of_command *= 2;

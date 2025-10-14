@@ -9,6 +9,25 @@ const unsigned int START_STACK_SIZE = 10;
 const int LEFT_BIRD = 2147483647;
 const int RIGTH_BIRD = 2147483646;
 
+enum Commands
+{
+    HLT = -1,
+    POP = 0,
+    PUSH = 1,
+    OUT = 2,
+    ADD = 3,
+    MUL = 4,
+    SUB = 5,
+    DIV = 6,
+    IN = 7,
+    CALL = 8,
+    RET = 9,
+    SQRT = 10,
+    POPR = 42,
+    PUSHR = 33,
+    JB = 50,
+};
+
 enum File_Usimng_Error_Code
 {
     NO_FILE_ERROR = 0,

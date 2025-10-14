@@ -155,67 +155,71 @@ bool do_user_command(int command, processor_t* processor)
 
     switch(command)
     {
-        case -1:
+        case HLT:
             return 1;
-        case 1:
+        case POP:
+            stack_pop(&processor->stk, &value);
+
+            return 0;
+        case PUSH:
             (processor->instruction_pointer)++;
             value = processor->programm[processor->instruction_pointer];
 
             stack_push(&processor->stk, value);
 
             return 0;
-        case 2:
+        case OUT:
             stack_pop(&processor->stk, &value);
 
             printf("%d\n", value);
 
             return 0;
-        case 3:
+        case ADD:
             stack_pop(&processor->stk, &elem_1);
             stack_pop(&processor->stk, &elem_2);
             stack_push(&processor->stk, elem_1+elem_2);
 
             return 0;
-        case 4:
+        case MUL:
             stack_pop(&processor->stk, &elem_1);
             stack_pop(&processor->stk, &elem_2);
             stack_push(&processor->stk, elem_1*elem_2);
 
             return 0;
-        case 5:
+        case SUB:
             stack_pop(&processor->stk, &elem_1);
             stack_pop(&processor->stk, &elem_2);
             stack_push(&processor->stk, elem_2-elem_1);
 
             return 0;
-        case 6:
+        case DIV:
             stack_pop(&processor->stk, &elem_1);
             stack_pop(&processor->stk, &elem_2);
             stack_push(&processor->stk, elem_2/elem_1);
 
             return 0;
-        case 7:
+        case IN:
             scanf("%d", &value);
             stack_push(&processor->stk, value);
 
             return 0;
-        case 8:
+        case CALL:
             (processor->instruction_pointer)++;
             stack_push(&processor->ret_stk, processor->instruction_pointer);
-            //processor->regs[15] = processor->instruction_pointer;
+
             processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
 
             return 0;
-        case 9:
+        case RET:
             stack_pop(&processor->ret_stk, &processor->instruction_pointer);
 
             return 0;
-        case 10:
+        case SQRT:
             stack_pop(&processor->stk, &elem_1);
             stack_push(&processor->stk, (int) sqrt(elem_1));
 
             return 0;
-        case 42:
+        case POPR:
             stack_pop(&processor->stk, &value);
 
             (processor->instruction_pointer)++;
@@ -224,14 +228,14 @@ bool do_user_command(int command, processor_t* processor)
             //printf("POPR %d", value);
 
             return 0;
-        case 33:
+        case PUSHR:
             (processor->instruction_pointer)++;
             reg_number = processor->programm[processor->instruction_pointer];
 
             stack_push(&processor->stk, (processor->regs)[reg_number]);
 
             return 0;
-        case 50:
+        case JB:
             stack_pop(&processor->stk, &elem_1);
             stack_pop(&processor->stk, &elem_2);
 
@@ -274,7 +278,8 @@ int my_strcmp(const char* str_1, const char* str_2)
 
 void cleaner(processor_t* processor)
 {
+    assert(processor);
+
     free(processor->stk.data);
     free(processor->ret_stk.data);
-
 }
