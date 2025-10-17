@@ -3,18 +3,20 @@
 #include <assert.h>
 #include "stack.h"
 
+const int NUMBER_OF_FILES = 2;
+
 bool check_file_founded(int argc, const char *input_address)
 {
     if (argc < NUMBER_OF_FILES)
     {
         fprintf(stderr, "Using %s input_address\n", input_address);
-        return 1;
+        return 1;//TODO change fprintf
     }
 
     return 0;
 }
 
-bool check_file_opening(const char *input_address, FILE** file_ptr)
+bool check_file_opening(const char *input_address, FILE** file_ptr)//TODO передавать права доступа к файлу
 {
     if ((*file_ptr = fopen(input_address, "a+")) == NULL)
     {

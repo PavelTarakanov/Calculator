@@ -1,13 +1,12 @@
 #ifndef STACK_H
-#define STACK_H
-
-const int NUMBER_OF_FILES = 2;
+#define STACK_H//TODO two headers
 
 const int COMMAND_SIZE = 200;
 const int NUMBER_OF_REGS = 16;
 const unsigned int START_STACK_SIZE = 10;
 const int LEFT_BIRD = 2147483647;
 const int RIGTH_BIRD = 2147483646;
+const int RAM_SIZE = 100;
 
 enum Commands
 {
@@ -24,7 +23,9 @@ enum Commands
     RET = 9,
     SQRT = 10,
     POPR = 42,
+    POPM = 43,
     PUSHR = 33,
+    PUSHM = 34,
     JB = 50,
 };
 
@@ -59,6 +60,7 @@ struct processor_t{stack_t stk;
                    int* programm;
                    int* regs;
                    int instruction_pointer;
+                   int* RAM;
 };
 
 bool check_file_founded(int argc, const char *input_address);
@@ -74,6 +76,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
 Stack_Error_Code stack_init(stack_t* stk, unsigned int capacity);
 Stack_Error_Code processor_init(processor_t* processor, const unsigned int capacity);
 void processor_dump(processor_t* processor, int number_of_commands);
+void video_memory(int* RAM);
 
 Stack_Error_Code stack_upgrade(stack_t* stk);
 Stack_Error_Code stack_degrade(stack_t* stk);
@@ -83,7 +86,7 @@ Stack_Error_Code stack_verify(stack_t* stk);
 void stack_dump(stack_t* stk);
 
 bool read_programm(FILE* input_address, int** programm, int* number_of_commands);
-void calculator(processor_t* processor);
+void calculator(processor_t* processor, int number_of_commands);
 bool do_user_command(int command, processor_t* processor);
 
 void cleaner(processor_t* processor);

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>//TODO прыгает куда-то не туда
+#include <ctype.h>
 #include <assert.h>
 #include <unistd.h>
 #include <math.h>
@@ -36,9 +36,10 @@ int main(int argc, char* argv[])
 
     //processor_dump(&processor, number_of_commands);
 
-    calculator(&processor);
+    calculator(&processor, number_of_commands);
 
-    //StackDump(&stk);
+    video_memory(processor.RAM);
+
     cleaner(&processor);
 
     return NO_FILE_ERROR;
@@ -60,6 +61,8 @@ Stack_Error_Code processor_init(processor_t* processor, const unsigned int capac
 
     processor->instruction_pointer = 0;
 
+    processor->RAM = (int*) calloc(RAM_SIZE, sizeof(int));
+
     return NO_ERROR;
 }
 
@@ -80,6 +83,8 @@ void processor_dump(processor_t* processor, int number_of_commands)
         printf("    regs[%d] = %d\n", i, processor->regs[i]);
     }
     stack_dump(&processor->stk);
+
+    video_memory(processor->RAM);
 }
 
 bool read_programm(FILE* input_address, int** programm, int* number_of_commands)
@@ -108,7 +113,7 @@ bool read_programm(FILE* input_address, int** programm, int* number_of_commands)
     return 0;
 }
 
-void calculator(processor_t* processor)
+void calculator(processor_t* processor, int number_of_commands)
 {
     assert(processor);
 
@@ -151,7 +156,7 @@ bool do_user_command(int command, processor_t* processor)
     int reg_number = -1;
     int elem_1 = 0;
     int elem_2 = 0;
-
+    int cell_number = -1;
 
     switch(command)
     {
@@ -195,7 +200,7 @@ bool do_user_command(int command, processor_t* processor)
         case DIV:
             stack_pop(&processor->stk, &elem_1);
             stack_pop(&processor->stk, &elem_2);
-            stack_push(&processor->stk, elem_2/elem_1);
+            stack_push(&processor->stk, elem_2/elem_1);//TODO /0 ?!
 
             return 0;
         case IN:
@@ -228,11 +233,29 @@ bool do_user_command(int command, processor_t* processor)
             //printf("POPR %d", value);
 
             return 0;
+        case POPM:
+            stack_pop(&processor->stk, &value);
+
+            (processor->instruction_pointer)++;
+
+            cell_number = processor->regs[processor->programm[processor->instruction_pointer]];
+            //printf("%d\n", cell_number);
+
+            processor->RAM[cell_number] = value;
+
+            return 0;
         case PUSHR:
             (processor->instruction_pointer)++;
             reg_number = processor->programm[processor->instruction_pointer];
 
             stack_push(&processor->stk, (processor->regs)[reg_number]);
+
+            return 0;
+        case PUSHM:
+            (processor->instruction_pointer)++;
+            cell_number = processor->programm[processor->instruction_pointer];
+
+            stack_push(&processor->stk, processor->RAM[cell_number]);
 
             return 0;
         case JB:
@@ -282,4 +305,19 @@ void cleaner(processor_t* processor)
 
     free(processor->stk.data);
     free(processor->ret_stk.data);
+    free(processor->regs);
+    free(processor->programm);
+    free(processor->RAM);
+}
+
+void video_memory(int* RAM)
+{
+    for (int i = 0; i < RAM_SIZE; i++)
+    {
+        printf("%c", RAM[i]);
+        if (i % 10 == 9)
+            printf("\n");
+    }
+
+    return;
 }

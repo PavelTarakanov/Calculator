@@ -69,7 +69,7 @@ Stack_Error_Code stack_pop(stack_t* stk, int* address)
     *address = stk->data[--stk->size];
     stk->data[stk->size] = 0;
 
-    if (stk->size <= stk->capacity/2)
+    if (stk->size <= stk->capacity/2 && stk->size > START_STACK_SIZE)
         if (stack_degrade(stk))
             return REALLOCATION_ERROR;
 
