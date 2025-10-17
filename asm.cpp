@@ -88,6 +88,9 @@ void make_mashine_code(FILE* output_address, char* buffer, long long int number_
         fprintf(output_address, "%d", -1);
     }
 
+    free(mashine_code);
+    free(labels);
+
     return;
 }
 
@@ -102,7 +105,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
 
     char command[COMMAND_SIZE] = {};
     int number_of_command = 1;
-    int number_of_label = -1;
+    int number_of_label = -1;//TODO number_of_str
     bool error = 0;
     char* buffer_end = buffer + number_of_symbols*sizeof(char);
 
@@ -118,6 +121,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
         {
             number_of_command--;
             sscanf(command+1, "%d", &number_of_label);
+            label_upgrade(labels, start_number_of_labels, number_of_label);
             (*labels)[number_of_label] = number_of_command;
 
         }
@@ -177,7 +181,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
         {
             (*mashine_code)[number_of_command] = SQRT;
         }
-        else if (strcmp(command, "POPR") == 0)
+        else if (strcmp(command, "POPR") == 0)//TODO new function
         {
             int value = 0;
 
@@ -189,7 +193,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
 
             sscanf(buffer, "%s", command);
 
-            value = command[1] - 'A';
+            value = command[1] - 'A';//TODO специальная функция для реальных названиц регистров
             (*mashine_code)[number_of_command] = value;
         }
         else if (strcmp(command, "PUSHR") == 0)
@@ -224,6 +228,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
             if (command[0] == ':')
             {
                 sscanf(command+1, "%d", &number_of_label);
+                label_upgrade(labels, start_number_of_labels, number_of_label);
                 (*mashine_code)[number_of_command] = (*labels)[number_of_label];
             }
             else
@@ -247,12 +252,56 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
             if (command[0] == ':')
             {
                 sscanf(command+1, "%d", &number_of_label);
+                label_upgrade(labels, start_number_of_labels, number_of_label);
                 (*mashine_code)[number_of_command] = (*labels)[number_of_label];
             }
             else
             {
                 (*mashine_code)[number_of_command] = value;
             }
+        }
+        else if (strcmp(command, "POPM") == 0)
+        {
+            int value = 0;
+
+            buffer += (strlen(command)+1)*sizeof(char);
+            (*mashine_code)[number_of_command] = POPM;
+            massive_upgrade(mashine_code, start_number_of_command, number_of_command);
+            number_of_command++;
+            massive_upgrade(mashine_code, start_number_of_command, number_of_command);
+
+            sscanf(buffer, "%s", command);
+
+            value = command[2] - 'A';
+
+            if (command[0] != '[' || command[strlen(command)-1] != ']')
+            {
+                printf("asm.asm:%d: syntax_error\n", number_of_command);
+                error = 1;
+            }
+
+            (*mashine_code)[number_of_command] = value;
+        }
+        else if (strcmp(command, "PUSHM") == 0)
+        {
+            int value = 0;
+
+            buffer += (strlen(command)+1)*sizeof(char);
+            (*mashine_code)[number_of_command] = PUSHM;
+            massive_upgrade(mashine_code, start_number_of_command, number_of_command);
+            number_of_command++;
+            massive_upgrade(mashine_code, start_number_of_command, number_of_command);
+
+            sscanf(buffer, "%s", command);
+
+            value = command[2] - 'A';
+            if (command[0] != '[' || command[strlen(command)-1] != ']')
+            {
+                printf("asm.asm:%d: syntax_error\n", number_of_command);
+                error = 1;
+            }
+
+            (*mashine_code)[number_of_command] = value;
         }
         else
         {
@@ -265,8 +314,8 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
         sscanf(buffer,"%s", command);
     }
 
-    (*mashine_code)[number_of_command] = -1;
     number_of_command--;
+    (*mashine_code)[number_of_command] = -1;
     (*mashine_code)[0] = number_of_command;
 
     return error;
@@ -283,4 +332,19 @@ void massive_upgrade(int** mashine_code, int* start_number_of_command, int numbe
         //printf("%p %d\n", *mashine_code, *start_number_of_command);
         *mashine_code = (int*) realloc(*mashine_code, (*start_number_of_command)*sizeof(int));
     }
+}
+
+void label_upgrade(int** labels, int* start_number_of_labels, int number_of_label)
+{
+    assert(labels);
+    assert(start_number_of_labels);
+
+    if (number_of_label >= *start_number_of_labels)
+    {
+        *start_number_of_labels = number_of_label + 1;
+        //printf("%p %d\n", *mashine_code, *start_number_of_command);
+        *labels = (int*) realloc(*labels, (*start_number_of_labels)*sizeof(int));
+    }
+
+    return;
 }

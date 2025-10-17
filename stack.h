@@ -69,6 +69,7 @@ bool check_file_closing(FILE* input_address);
 
 long long int read_text(FILE* input_address, char** buffer);
 void massive_upgrade(int** mashine_code, int* start_number_of_command, int number_of_command);
+;void label_upgrade(int** labels, int* start_number_of_labels, int number_of_label);
 void make_mashine_code(FILE* output_address, char* buffer, long long int number_of_symbols);
 bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* start_number_of_command,
                                int* start_number_of_labels, long long int number_of_symbols);

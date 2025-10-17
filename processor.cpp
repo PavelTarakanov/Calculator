@@ -314,7 +314,7 @@ void video_memory(int* RAM)
 {
     for (int i = 0; i < RAM_SIZE; i++)
     {
-        printf("%c", RAM[i]);
+        printf("%c   ", RAM[i]);
         if (i % 10 == 9)
             printf("\n");
     }
