@@ -15,11 +15,13 @@ Stack_Error_Code stack_init(stack_t* stk, unsigned int capacity)
     stk->size = 1;
     stk->capacity = capacity;
     stk->data = (int*) calloc(capacity + 2, sizeof(int*));
+
     if (stk->data == NULL)
     {
         printf("Error while memory allocation\n");
         return ALLOCATION_ERROR;
     }
+
     stk->data[0] = LEFT_BIRD;
     stk->data[capacity+1] = RIGTH_BIRD;
     //StackDump(stk);

@@ -5,45 +5,9 @@
 #include <unistd.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 #include "stack.h"
-
-int main(int argc, char* argv[])
-{
-    processor_t processor = {};
-    FILE* input_address = NULL;
-    int number_of_commands = 0;
-
-    if (check_file_founded(argc, argv[0]))
-        return FILE_NOT_FOUND_ERROR;
-
-    if (check_file_opening(argv[1], &input_address))
-        return FILE_OPENING_ERROR;
-
-    if (read_programm(input_address, &processor.programm , &number_of_commands))
-        return ALLOCATION_ERROR;
-
-    if (check_file_closing(input_address))
-        return FILE_CLOSING_ERROR;
-    /*
-    for (int i = 0; i < number_of_commands*2; i++)
-    {
-        getchar();
-        printf("%d\n", processor.programm[i]);
-    }
-    */
-    if (processor_init(&processor, START_STACK_SIZE))
-        return INITIALISATION_ERROR;
-
-    //processor_dump(&processor, number_of_commands);
-
-    calculator(&processor, number_of_commands);
-
-    video_memory(processor.RAM);
-
-    cleaner(&processor);
-
-    return NO_FILE_ERROR;
-}
+#include "processor.h"
 
 Stack_Error_Code processor_init(processor_t* processor, const unsigned int capacity)
 {
@@ -56,12 +20,16 @@ Stack_Error_Code processor_init(processor_t* processor, const unsigned int capac
         return ALLOCATION_ERROR;
 
     processor->regs = (int*) calloc(NUMBER_OF_REGS, sizeof(int));
+
     if (processor->regs == NULL)
         return ALLOCATION_ERROR;
 
     processor->instruction_pointer = 0;
 
     processor->RAM = (int*) calloc(RAM_SIZE, sizeof(int));
+
+    if (processor->RAM == NULL)
+        return ALLOCATION_ERROR;
 
     return NO_ERROR;
 }
@@ -95,22 +63,25 @@ bool read_programm(FILE* input_address, int** programm, int* number_of_commands)
 
     int command = -2;
 
-    fscanf(input_address, "%d", number_of_commands);
+    if (fscanf(input_address, "%d", number_of_commands) != 1)
+        return true;//TODO true/false
+
     *programm = (int*) calloc(*number_of_commands, sizeof(int));
 
     if (*programm == NULL)
     {
-        return 1;
+        return true;
     }
 
     for (int i = 0; i < *number_of_commands; i++)
     {
-        fscanf(input_address, "%d", &command);
+        if (fscanf(input_address, "%d", &command) != 1)
+            return true;
         //printf("%d\n", command);
         (*programm)[i] = command;
     }
 
-    return 0;
+    return false;
 }
 
 void calculator(processor_t* processor, int number_of_commands)
@@ -126,10 +97,6 @@ void calculator(processor_t* processor, int number_of_commands)
         if (do_user_command(command, processor))
             break;
 
-        //processor_dump(processor, number_of_commands);
-        //getchar();
-
-
         /*
         stack_dump(&processor->stk);
         printf("%d", processor->programm[processor->instruction_pointer]);
@@ -142,7 +109,6 @@ void calculator(processor_t* processor, int number_of_commands)
         }
         processor->instruction_pointer++;
         command = processor->programm[processor->instruction_pointer];
-        //printf("%d\n", command);
     }
 
     return;
@@ -200,11 +166,18 @@ bool do_user_command(int command, processor_t* processor)
         case DIV:
             stack_pop(&processor->stk, &elem_1);
             stack_pop(&processor->stk, &elem_2);
-            stack_push(&processor->stk, elem_2/elem_1);//TODO /0 ?!
+            if (elem_1 == 0)
+            {
+                printf("You can't divide by zero!\n");
+                return 1;
+            }
+            stack_push(&processor->stk, elem_2/elem_1);
 
             return 0;
         case IN:
-            scanf("%d", &value);
+            while (scanf("%d", &value) != 1)
+                printf("Input number!!!\n");
+
             stack_push(&processor->stk, value);
 
             return 0;
@@ -228,7 +201,7 @@ bool do_user_command(int command, processor_t* processor)
             stack_pop(&processor->stk, &value);
 
             (processor->instruction_pointer)++;
-            reg_number = processor->programm[processor->instruction_pointer];
+            reg_number = processor->programm[processor->instruction_pointer];//TODO существует ли регистр
             (processor->regs)[reg_number] = value;
             //printf("POPR %d", value);
 
@@ -239,7 +212,7 @@ bool do_user_command(int command, processor_t* processor)
             (processor->instruction_pointer)++;
 
             cell_number = processor->regs[processor->programm[processor->instruction_pointer]];
-            //printf("%d\n", cell_number);
+            //printf("%d\n", cell_number);//cell_number > 100 ?
 
             processor->RAM[cell_number] = value;
 
@@ -258,15 +231,26 @@ bool do_user_command(int command, processor_t* processor)
             stack_push(&processor->stk, processor->RAM[cell_number]);
 
             return 0;
-        case JB:
+        case JB://TODO all JMP
             stack_pop(&processor->stk, &elem_1);
             stack_pop(&processor->stk, &elem_2);
 
             (processor->instruction_pointer)++;
             if (elem_1>elem_2)
                 processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
-            return 0;
 
+            return 0;
+        case VIDEO:
+            video_memory(processor->RAM);
+            return 0;
+        case PAUSE:
+            struct timespec ts;
+            ts.tv_sec = 1;
+            ts.tv_nsec = 0;
+
+            nanosleep(&ts, NULL);
+
+            return 0;
         default:
             printf("Print real command!\n");
             return 1;
@@ -312,11 +296,18 @@ void cleaner(processor_t* processor)
 
 void video_memory(int* RAM)
 {
-    for (int i = 0; i < RAM_SIZE; i++)
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = 10000000;
+
+    nanosleep(&ts, NULL);
+
+    for (int i = 0; i < 1600; i++)
     {
-        printf("%c   ", RAM[i]);
-        if (i % 10 == 9)
-            printf("\n");
+        if (i % 40 < 39)
+            printf("%c   ", RAM[i]);
+        if (i % 40 == 39)
+            printf("\n\n");
     }
 
     return;
