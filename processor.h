@@ -23,8 +23,14 @@ enum Commands
     PUSHR = 33,
     PUSHM = 34,
     JB = 50,
-    VIDEO = 51,
-    PAUSE = 52,
+    JBE = 51,
+    JA = 52,
+    JAE = 53,
+    JE = 54,
+    JNE = 55,
+    JMP = 56,
+    VIDEO = 48,
+    PAUSE = 49,
 };
 
 enum File_Usimng_Error_Code
@@ -37,6 +43,27 @@ enum File_Usimng_Error_Code
     INITIALISATION_ERROR = 5,
     UNKNOWN_COMMAND = 6,
     MAKING_MASHINE_CODE_ERROR = 7
+};
+
+enum Regs_Numbers
+{
+    UNKNOWN_REG = -1,
+    RAX = 0,
+    RBX = 1,
+    RCX = 2,
+    RDX = 3,
+    RSI = 4,
+    RDI = 5,
+    RBP = 6,
+    RSP = 7,
+    R8  = 8,
+    R9  = 9,
+    R10 = 10,
+    R11 = 11,
+    R12 = 12,
+    R13 = 13,
+    R14 = 14,
+    R15 = 15,
 };
 
 struct processor_t{stack_t stk;

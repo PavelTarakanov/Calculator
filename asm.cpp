@@ -83,7 +83,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
     int number_of_command = 1;
     int number_of_str = 0;
     int number_of_label = -1;
-    bool error = 0;
+    bool error = false;
     char* buffer_end = buffer + number_of_symbols*sizeof(char);
 
     while(buffer < buffer_end)
@@ -94,7 +94,10 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
         //printf("cmd = '%s'\n", command);
         //getchar();
         if (massive_upgrade(mashine_code, start_number_of_command, number_of_command))
-            error = 1;
+        {
+            error = true;
+            return error;
+        }
         number_of_str++;
 
         if (command[0] == ';')
@@ -178,12 +181,37 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
         else if (strcmp(command, "JB") == 0)
         {
             error = do_jb_code(command, mashine_code, &start_number_of_command, &number_of_command, &buffer,
-                       labels, start_number_of_labels, number_of_label);
+                               labels, start_number_of_labels, number_of_label);
+        }
+        else if (strcmp(command, "JA") == 0)
+        {
+            error = do_ja_code(command, mashine_code, &start_number_of_command, &number_of_command, &buffer,
+                               labels, start_number_of_labels, number_of_label);
+        }
+        else if (strcmp(command, "JAE") == 0)
+        {
+            error = do_jae_code(command, mashine_code, &start_number_of_command, &number_of_command, &buffer,
+                               labels, start_number_of_labels, number_of_label);
+        }
+        else if (strcmp(command, "JE") == 0)
+        {
+            error = do_je_code(command, mashine_code, &start_number_of_command, &number_of_command, &buffer,
+                               labels, start_number_of_labels, number_of_label);
+        }
+        else if (strcmp(command, "JNE") == 0)
+        {
+            error = do_jne_code(command, mashine_code, &start_number_of_command, &number_of_command, &buffer,
+                               labels, start_number_of_labels, number_of_label);
+        }
+        else if (strcmp(command, "JMP") == 0)
+        {
+            error = do_jmp_code(command, mashine_code, &start_number_of_command, &number_of_command, &buffer,
+                               labels, start_number_of_labels, number_of_label);
         }
         else if (strcmp(command, "CALL") == 0)
         {
             error = do_call_code(command, mashine_code, &start_number_of_command, &number_of_command, &buffer,
-                       labels, start_number_of_labels, number_of_label);
+                                 labels, start_number_of_labels, number_of_label);
         }
         else if (strcmp(command, "POPM") == 0)
         {
@@ -200,7 +228,7 @@ bool make_code_massive(char* buffer, int** mashine_code, int** labels, int* star
         else
         {
             printf("stars.asm:%d: syntax_error\n", number_of_str);
-            error = 1;
+            error = true;
         }
 
         number_of_command++;
@@ -223,9 +251,12 @@ bool massive_upgrade(int** mashine_code, int* start_number_of_command, int numbe
     {
         *start_number_of_command *= 2;
         //printf("%p %d\n", *mashine_code, *start_number_of_command);
-        *mashine_code = (int*) realloc(*mashine_code, (*start_number_of_command)*sizeof(int));//TODO если реаллок провалился, старый указатель не меняется и не освобождается, нужно освобождать и останавливать программу
+        *mashine_code = (int*) realloc(*mashine_code, (*start_number_of_command)*sizeof(int));
         if (*mashine_code == NULL)
+        {
+            free(*mashine_code);
             return 1;
+        }
     }
 
     return 0;

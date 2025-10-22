@@ -64,7 +64,7 @@ bool read_programm(FILE* input_address, int** programm, int* number_of_commands)
     int command = -2;
 
     if (fscanf(input_address, "%d", number_of_commands) != 1)
-        return true;//TODO true/false
+        return true;
 
     *programm = (int*) calloc(*number_of_commands, sizeof(int));
 
@@ -201,7 +201,13 @@ bool do_user_command(int command, processor_t* processor)
             stack_pop(&processor->stk, &value);
 
             (processor->instruction_pointer)++;
-            reg_number = processor->programm[processor->instruction_pointer];//TODO существует ли регистр
+            reg_number = processor->programm[processor->instruction_pointer];
+            if (reg_number > 15 || reg_number < 0)
+            {
+                printf("ERROR: Incorrect regicter!");
+                return 1;
+            }
+
             (processor->regs)[reg_number] = value;
             //printf("POPR %d", value);
 
@@ -221,6 +227,11 @@ bool do_user_command(int command, processor_t* processor)
             (processor->instruction_pointer)++;
             reg_number = processor->programm[processor->instruction_pointer];
 
+            if (reg_number > 15 || reg_number < 0)
+            {
+                printf("ERROR: Incorrect regicter!");
+                return 1;
+            }
             stack_push(&processor->stk, (processor->regs)[reg_number]);
 
             return 0;
@@ -231,13 +242,67 @@ bool do_user_command(int command, processor_t* processor)
             stack_push(&processor->stk, processor->RAM[cell_number]);
 
             return 0;
-        case JB://TODO all JMP
+        case JB:
             stack_pop(&processor->stk, &elem_1);
             stack_pop(&processor->stk, &elem_2);
 
             (processor->instruction_pointer)++;
             if (elem_1>elem_2)
                 processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
+
+            return 0;
+        case JBE:
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+
+            (processor->instruction_pointer)++;
+            if (elem_1>=elem_2)
+                processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
+
+            return 0;
+        case JA:
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+
+            (processor->instruction_pointer)++;
+            if (elem_1<elem_2)
+                processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
+
+            return 0;
+        case JAE:
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+
+            (processor->instruction_pointer)++;
+            if (elem_1<=elem_2)
+                processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
+
+            return 0;
+        case JE:
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+
+            (processor->instruction_pointer)++;
+            if (elem_1==elem_2)
+                processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
+
+            return 0;
+        case JNE:
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+
+            (processor->instruction_pointer)++;
+            if (elem_1!=elem_2)
+                processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
+
+            return 0;
+        case JMP:
+            stack_pop(&processor->stk, &elem_1);
+            stack_pop(&processor->stk, &elem_2);
+
+            (processor->instruction_pointer)++;
+
+            processor->instruction_pointer = processor->programm[processor->instruction_pointer] - 1;
 
             return 0;
         case VIDEO:
